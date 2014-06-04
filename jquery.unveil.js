@@ -10,14 +10,16 @@
 
 ;(function($) {
 
-  $.fn.unveil = function(threshold, callback) {
+  $.fn.unveil = function(threshold,el,callback) {
 
-    var $w = $(window),
+    var /*$w = $(window),*/
+        $w = el || $(window),
         th = threshold || 0,
-        retina = window.devicePixelRatio > 1,
-        attrib = retina? "data-src-retina" : "data-src",
+        retina = isRetina(),
+        attrib = retina ? "data-src-retina" : "data-src",
         images = this,
         loaded;
+        //alert("I am retina : "+retina);
 
     this.one("unveil", function() {
       var source = this.getAttribute(attrib);
@@ -35,8 +37,8 @@
 
         var wt = $w.scrollTop(),
             wb = wt + $w.height(),
-            et = $e.offset().top,
-            eb = et + $e.height();
+            et = $e.offset().top + $w.scrollTop() -$w.offset().top,
+          eb = et + $e.height();
 
         return eb >= wt - th && et <= wb + th;
       });
@@ -44,11 +46,23 @@
       loaded = inview.trigger("unveil");
       images = images.not(loaded);
     }
+    function isRetina() {
+       var query = '(-webkit-min-device-pixel-ratio: 1.5),\
+                    (min--moz-device-pixel-ratio: 1.5),\
+                    (-o-min-device-pixel-ratio: 3/2),\
+                    (min-device-pixel-ratio: 1.5),\
+                    (min-resolution: 144dpi),\
+                    (min-resolution: 1.5dppx)';
+       if (window.devicePixelRatio > 1 || (window.matchMedia && window.matchMedia(query).matches)) {
+          return true;
+       }
+       return false;
+      }
 
-    $w.on("scroll.unveil resize.unveil lookup.unveil", unveil);
+    $w.scroll(unveil);
+    $w.resize(unveil);
 
     unveil();
-
     return this;
 
   };
